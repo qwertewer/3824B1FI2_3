@@ -1,4 +1,4 @@
-﻿#include "../../../include/Lab2/utmatrix.h"
+﻿#include "utmatrix.h"
 #include <exception>
 
 //TVector
