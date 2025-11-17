@@ -165,7 +165,7 @@ ValType& TVector<ValType>::operator[](int pos) //Доступ к элемент�
 {
 	if (pos < StartIndex || pos >(Size + StartIndex) - 1) //Проверяем корректность индекса pos. Пример: TVector v(5,3), тогда доступные индексы: 3, 4, 5, 6, 7. Причём память pVector хранится по индексам от 0 до 4.
 	{
-		throw std::out_of_range("An unavailable index for accessing vector elements"); //Бросаем исключение.
+		throw std::out_of_range("Unavailable index for accessing elements"); //Бросаем исключение.
 	}
 	return pVector[pos - StartIndex];
 }
@@ -261,14 +261,14 @@ TVector<ValType> TVector<ValType>::operator+(const TVector& v) //Сложени�
 {
 	if (Size != v.Size || StartIndex != v.StartIndex) //Проверяем совпадение размеров вектора и индексов первых элементов векторов.
 	{
-		throw std::invalid_argument("The sizes of the vectors and the indices of the first elements of the vector are different"); //Бросаем исключение.
+		throw std::invalid_argument("The sizes and/or indexes of the first elements are different"); //Бросаем исключение.
 	}
 
-	TVector<ValType> VecRes(*this); //Создаём копию текущего вектора (Констурктор копирования).
+	TVector<ValType> VecRes(Size, StartIndex); //Создаём новый вектор, результат сложения двух векторов.
 
 	for (int i = 0; i < Size; ++i)
 	{
-		VecRes.pVector[i] += v.pVector[i]; //Скалдываем элементы двух векторов.
+		VecRes.pVector[i] = pVector[i] + v.pVector[i]; //Скалдываем элементы двух векторов.
 	}
 
 	return VecRes;
@@ -280,14 +280,14 @@ TVector<ValType> TVector<ValType>::operator-(const TVector& v) //Вычитан�
 {
 	if (Size != v.Size || StartIndex != v.StartIndex) //Проверяем совпадение размеров вектора и индексов первых элементов векторов.
 	{
-		throw std::invalid_argument("The sizes of the vectors and the indices of the first elements of the vector are different"); //Бросаем исключение.
+		throw std::invalid_argument("The sizes and/or indexes of the first elements are different"); //Бросаем исключение.
 	}
 
-	TVector<ValType> VecRes(*this); //Создаём копию текущего вектора (Констурктор копирования).
+	TVector<ValType> VecRes(Size, StartIndex); //Создаём новый вектор, результат вычитания двух векторов.
 
 	for (int i = 0; i < Size; ++i)
 	{
-		VecRes.pVector[i] -= v.pVector[i]; //Вычитаем элементы двух векторов.
+		VecRes.pVector[i] = pVector[i] - v.pVector[i]; //Вычитаем элементы двух векторов.
 	}
 
 	return VecRes;
@@ -299,7 +299,7 @@ ValType TVector<ValType>::operator*(const TVector& v) //Скалярное пр�
 {
 	if (Size != v.Size || StartIndex != v.StartIndex) //Проверяем совпадение размеров вектора и индексов первых элементов векторов.
 	{
-		throw std::invalid_argument("The sizes of the vectors and the indices of the first elements of the vector are different"); //Бросаем исключение.
+		throw std::invalid_argument("The sizes and/or indexes of the first elements are different"); //Бросаем исключение.
 	}
 
 	ValType Res = 0; //Создаём переменную - результат скалярного произведения векторов. Инициализируем нулём (для сложных типов вызовется конструктор по умолчанию).
@@ -371,27 +371,14 @@ TMatrix<ValType>::TMatrix(const TVector<TVector<ValType>>& mt): TVector<TVector<
 template <class ValType>
 bool TMatrix<ValType>::operator==(const TMatrix& mt) const //Сравнение матриц
 {
-	if (this->Size != mt.Size) //Проверяем совпадение размеров верхнетреугольных матриц. (Проверка this->StartIndex != mt.StartIndex не нужна, так как матрица всегда создаётся с StartIndex = 0)
-	{
-		return false;
-	}
-
-	for (int i = 0; i < Size; ++i) //Проверяем совпадение строк матриц (то есть сравниваем вектора с помощью перегруженного оператора (!=)).
-	{
-		if (this->pVector[i] != mt.pVector[i])
-		{
-			return false;
-		}
-	}
-
-	return true;
+	return TVector<TVector<ValType>>::operator==(mt); //Вызываем перегруженный оператор сравнения == вектора с вектором класса TVector, так как матрица представляет собой вектор векторов, то есть к ней применимы операции векторов.
 }
 
 
 template <class ValType>
 bool TMatrix<ValType>::operator!=(const TMatrix& mt) const //Сравнение матриц.
 {
-	return !((*this) == mt); //Применяем перегруженный оператор сравнения (==) для матриц, но инвертируем результат (!).
+	return TVector<TVector<ValType>>::operator!=(mt); //Вызываем перегруженный оператор сравнения != вектора с вектором класса TVector, так как матрица представляет собой вектор векторов, то есть к ней применимы операции векторов.
 }
 
 
@@ -414,36 +401,12 @@ TMatrix<ValType>& TMatrix<ValType>::operator= (const TMatrix& mt) //Присва
 template <class ValType>
 TMatrix<ValType>  TMatrix<ValType>::operator+ (const TMatrix& mt) //Сложение матриц.
 {
-	if (this->Size != mt.Size)
-	{
-		throw std::invalid_argument("The matrices must be of the same size");
-	}
-
-	TMatrix<ValType> ResMatrix(this->Size); //Создаём новую матрицу, результат сложения двух матриц.
-
-	for (int i = 0; i < this->Size; ++i)
-	{
-		ResMatrix[i] = this->pVector[i] + mt.pVector[i]; //Применяем перегруженный оператор сложения двух векторов и перегруженный оператор присваивания для векторов. Результат записываем в новую матрицу.
-	}
-
-	return ResMatrix;
+	return TVector<TVector<ValType>>::operator+(mt); //Вызываем перегруженный оператор сложения + векторов класса TVector, так как матрица представляет собой вектор векторов, то есть к ней применимы операции векторов.
 }
 
 
 template <class ValType>
 TMatrix<ValType>  TMatrix<ValType>::operator- (const TMatrix& mt) //Вычитание матриц.
 {
-	if (this->Size != mt.Size)
-	{
-		throw std::invalid_argument("The matrices must be of the same size");
-	}
-
-	TMatrix<ValType> ResMatrix(this->Size); //Создаём новую матрицу, результат вычитания двух матриц.
-
-	for (int i = 0; i < this->Size; ++i)
-	{
-		ResMatrix[i] = this->pVector[i] - mt.pVector[i]; //Применяем перегруженный оператор вычитания двух векторов и перегруженный оператор присваивания для векторов. Результат записываем в новую матрицу.
-	}
-
-	return ResMatrix;
+	return TVector<TVector<ValType>>::operator-(mt); //Вызываем перегруженный оператор вычитания - векторов класса TVector, так как матрица представляет собой вектор векторов, то есть к ней применимы операции векторов.
 }
