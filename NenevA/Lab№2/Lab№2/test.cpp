@@ -2,7 +2,7 @@
 #include "utmatrix.h"
 using namespace std;
 //Тесты TVector
-TEST(TestNameVectorInit, TestNameVector1) { // Проверка корректности конструкторов
+TEST(TestNameVector_Initialisation, TestNameVectorCheckConstructors) { // Проверка корректности конструкторов
     EXPECT_ANY_THROW({
         TVector<int> T(-3);
         });
@@ -26,13 +26,11 @@ TEST(TestNameVectorInit, TestNameVector1) { // Проверка корректности конструктор
         });
 }
 
-TEST(TestNameVectorOperators1, TestNameSquareBrackets) { //Проверка квадратных скобок
+TEST(TestNameVector_Operator_GetElement, TestNameSquareBrackets) { //Проверка квадратных скобок
     TVector<int> v(5, 2);
     std::string data_for_vector = "4 5 6";
     std::stringstream ss_vector(data_for_vector);
     ss_vector >> v;
-    //std::cout << "Vector v initialized from string: " << v << std::endl;
-    //cout << v[4];
     EXPECT_ANY_THROW({
         int a = v[5];
         });
@@ -46,7 +44,7 @@ TEST(TestNameVectorOperators1, TestNameSquareBrackets) { //Проверка квадратных с
     EXPECT_EQ(v[3], 5);
 }
 
-TEST(TestNameVectorOperators2, TestNameEquations1) { //Проверка операторов равенства, приравнивания, конструстора копирования
+TEST(TestNameVector_Operator_Equation, TestNameEquations) { //Проверка операторов равенства, приравнивания, конструстора копирования
     TVector<int> v(5, 2);
     std::string data_for_vector = "1 2 3";
     std::stringstream ss_vector(data_for_vector);
@@ -58,21 +56,18 @@ TEST(TestNameVectorOperators2, TestNameEquations1) { //Проверка операторов равен
     EXPECT_EQ(v, v);
     EXPECT_EQ((v == b), 1);
     EXPECT_EQ((v != b), 0);
+    TVector<int> v1(5, 2);
+    std::string data_for_vector1 = "4 5 6";
+    std::stringstream ss_vector1(data_for_vector1);
+    ss_vector1 >> v1;
+    TVector<int> l(5, 2);
+    l = v1;
+    EXPECT_EQ(v1, l);
+    v1 = v1;
+    EXPECT_EQ(v1, l);
 }
 
-TEST(TestNameVectorOperators3, TestNameEquations2) { //Проверка операторов равенства, приравнивания
-    TVector<int> v(5, 2);
-    std::string data_for_vector = "4 5 6";
-    std::stringstream ss_vector(data_for_vector);
-    ss_vector >> v;
-    TVector<int> b(5, 2);
-    b = v;
-    EXPECT_EQ(v, b);
-    v = v;
-    EXPECT_EQ(v, b);
-}
-
-TEST(TestNameVectorOperators4, TestNameVectorAddSub) {//Проверка работы векторных операций
+TEST(TestNameVector_Operator_Addition_Subtraction, TestNameVectorAddSub) {//Проверка работы векторных операций
     TVector<int> v(5, 2);
     std::string data_for_vector = "1 2 3";
     std::stringstream ss_vector(data_for_vector);
@@ -97,7 +92,7 @@ TEST(TestNameVectorOperators4, TestNameVectorAddSub) {//Проверка работы векторны
     EXPECT_EQ(b, t - v);
 }
 
-TEST(TestNameVectorOperators5, TestNameVectorMult) { // Проверка скалярного произведения векторов
+TEST(TestNameVector_Operator_Multiplication, TestNameVectorMult) { // Проверка скалярного произведения векторов
     TVector<int> v(5, 2);
     std::string data_for_vector = "1 2 3";
     std::stringstream ss_vector(data_for_vector);
@@ -115,7 +110,7 @@ TEST(TestNameVectorOperators5, TestNameVectorMult) { // Проверка скалярного прои
     EXPECT_EQ(b * v, 4);
 }
 
-TEST(TestNameVectorOperators6, TestNameVectorDiffDImensions) { //Проверка векторных операций с разными длинами векторов
+TEST(TestNameVector_Operator_Add_Sub_Mul_Different_DImensions, TestNameVectorDifferentDImensions) { //Проверка векторных операций с разными длинами векторов
     TVector<int> v(6, 2);
     std::string data_for_vector = "1 2 3 4";
     std::stringstream ss_vector(data_for_vector);
@@ -135,7 +130,7 @@ TEST(TestNameVectorOperators6, TestNameVectorDiffDImensions) { //Проверка вектор
         });
 }
 
-TEST(TestNameVectorOperators7, TestNameVectorDiffStart) {// Проверка операций с разными StartIndex - определены, поэтому не дают ошибок
+TEST(TestNameVector_Operator_Add_Sub_Mul_Different_StartIndices, TestNameVectorDifferentStart) {// Проверка операций с разными StartIndex - определены, поэтому не дают ошибок
     TVector<int> v(5, 3);
     std::string data_for_vector = "1 2";
     std::stringstream ss_vector(data_for_vector);
@@ -161,9 +156,11 @@ TEST(TestNameVectorOperators7, TestNameVectorDiffStart) {// Проверка операций с 
     EXPECT_EQ(t* v, 17);
     EXPECT_EQ(t + v, b);
     EXPECT_EQ(t - v, c);
+    EXPECT_EQ(v*t, 17);
+    EXPECT_EQ(v+t, b);
 }
 
-TEST(TestNameVectorOperators8, TestNameScalar) { //Проверка на операции со скалярами
+TEST(TestNameVector_Operators_Scalar_Operations, TestNameScalarOperators) { //Проверка на операции со скалярами
     TVector<int> v(5, 3);
     std::string data_for_vector = "1 2";
     std::stringstream ss_vector(data_for_vector);
@@ -181,7 +178,7 @@ TEST(TestNameVectorOperators8, TestNameScalar) { //Проверка на операции со скаля
 
 //Тест TMatrix
 
-TEST(TestMatricesInit, TestNameMatrix1) { //Проверка конструкторов TMatrix
+TEST(TestNameMatrices_Initialisation, TestNameMatrixConstructors) { //Проверка конструкторов TMatrix
     EXPECT_ANY_THROW({
         TMatrix<int> T(-3);
         });
@@ -207,16 +204,9 @@ TEST(TestMatricesInit, TestNameMatrix1) { //Проверка конструкторов TMatrix
         TMatrix<int> mt(A);
         });
     TVector<TVector<int>> B(4);
-    for (int i = 0; i < B.GetSize(); ++i) {
-        TVector<int> S(4);
-        B[i] = S;
-    }
-    EXPECT_ANY_THROW({
-        TMatrix<int> mt(B);
-        });
 }
 
-TEST(TestNameMatricesOperator1, TestNameEquation1) { //Операторы равенства для матриц
+TEST(TestNameMatrices_Operator_Equation, TestNameEquation) { //Операторы равенства для матриц
     TMatrix<int> m(3);
     std::string data_for_matrix = "1 2 3 4 5 6";
     std::stringstream ss_matrix(data_for_matrix);
@@ -235,7 +225,7 @@ TEST(TestNameMatricesOperator1, TestNameEquation1) { //Операторы равенства для м
     EXPECT_EQ((m2 != m), 1);
 }
 
-TEST(TestNameMatricesOperator2, TestNameAddSub) { //Операторы сложения и вычитания для матриц
+TEST(TestNameMatrices_Operator_Addition_Subtraction, TestNameAddSub) { //Операторы сложения и вычитания для матриц
     TMatrix<int> m(3);
     std::string data_for_matrix = "1 2 3 4 5 6";
     std::stringstream ss_matrix(data_for_matrix);

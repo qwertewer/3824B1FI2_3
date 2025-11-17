@@ -36,7 +36,7 @@ public:
     // ввод-вывод
     //Формат ввода - последовательность чисел разделенных пробелами или же ввод чисел поочередно
     friend std::istream& operator>> (std::istream& in, TVector& v) {
-        for (int i = v.StartIndex; i < v.Size; ++i) {
+        for (int i = 0; i < v.Size- v.StartIndex; ++i) {
             in >> v.pVector[i];
         }
         return in;
@@ -45,7 +45,7 @@ public:
         for (int i = 0; i < v.StartIndex; ++i) {
             out << "0 ";
         }
-        for (int i = v.StartIndex; i < v.Size; ++i) {
+        for (int i = 0; i < v.Size- v.StartIndex; ++i) {
             out << v.pVector[i] << " ";
         }
         return out;
@@ -83,20 +83,20 @@ public:
 };
 
 template <class ValType>
-TVector<ValType>::TVector(int s, int si) : Size(s), StartIndex(si) {
-    if (Size > MAX_VECTOR_SIZE || Size < 0 || si > MAX_VECTOR_SIZE || si < 0 || Size < si) {
+TVector<ValType>::TVector(int s, int si) : Size(s), StartIndex(si), pVector(nullptr) {
+    if (s > MAX_VECTOR_SIZE || s < 0 || si > MAX_VECTOR_SIZE || si < 0 || s < si) {
         throw std::out_of_range("Incorrect output data");
     }
-    pVector = new ValType[Size];
+    pVector = new ValType[Size - StartIndex]();
 }
 
 template <class ValType>
 TVector<ValType>::TVector(const TVector& v) {
     Size = v.Size;
     StartIndex = v.StartIndex;
-    pVector = new ValType[Size];
-    for (size_t i = StartIndex; i < Size; ++i) {
-        pVector[i] = v.pVector[i]; // При этом элементы до StartIndex не инициализируются, но полагаются нулями
+    pVector = new ValType[Size - StartIndex];
+    for (size_t i = 0; i < Size- StartIndex; ++i) {
+        pVector[i] = v.pVector[i];
     }
 }
 
@@ -108,13 +108,13 @@ TVector<ValType>::~TVector() {
 
 template <class ValType>
 ValType& TVector<ValType>::operator[](int pos) {
-    if (pos < 0 || pos >= Size) {
+    if (pos >= Size) {
         throw std::out_of_range("Index is out of range");
     }
     if (pos < StartIndex) { //На случай если мы не вполне понимаем что является нулем, например у некоего сложного класса
         throw std::out_of_range("Vector didn't get initialized at all before the start index");
     }
-    return pVector[pos];
+    return pVector[pos - StartIndex];
 }
 
 template <class ValType>
@@ -122,7 +122,7 @@ bool TVector<ValType>::operator==(const TVector& v) const {
     if (Size != v.Size || StartIndex != v.StartIndex) {
         return false;
     }
-    for (size_t i = StartIndex; i < Size; ++i) {
+    for (size_t i = 0; i < Size-StartIndex; ++i) {
         if (pVector[i] != v.pVector[i]) {
             return false;
         }
@@ -137,27 +137,24 @@ bool TVector<ValType>::operator!=(const TVector& v) const {
 
 template <class ValType>
 TVector<ValType>& TVector<ValType>::operator=(const TVector& v) {
-    if (*this == v) {
+    if (this == &v) {
         return *this;
     }
-    delete[] pVector;
-    Size = v.Size;
-    StartIndex = v.StartIndex;
-    pVector = new ValType[Size];
-    for (size_t i = StartIndex; i < Size; ++i) {
-        pVector[i] = v.pVector[i];
-    }
+    TVector temp(v);
+    std::swap(Size, temp.Size);
+    std::swap(StartIndex, temp.StartIndex);
+    std::swap(pVector, temp.pVector);
     return *this;
 }
 
 template <class ValType>
 TVector<ValType> TVector<ValType>::operator+(const ValType& val) {
     TVector result(Size, 0); //В итоговом векторе все элементы будут инициализированы
-    for (int i = 0; i < StartIndex; ++i) {//Инициализируем элементы, что были нулями значением val
+    for (int i = 0; i < StartIndex; ++i) {
         result.pVector[i] = val;
     }
-    for (int i = StartIndex; i < Size; ++i) {
-        result.pVector[i] = pVector[i] + val;
+    for (int i = 0; i < Size - StartIndex; ++i) {
+        result.pVector[i + StartIndex] = pVector[i] + val;
     }
     return result;
 }
@@ -166,10 +163,10 @@ template <class ValType>
 TVector<ValType> TVector<ValType>::operator-(const ValType& val) {
     TVector result(Size, 0);
     for (int i = 0; i < StartIndex; ++i) {
-        result.pVector[i] = -val;//Инициализируем элементы, что были нулями значением  -val
+        result.pVector[i] = -val;
     }
-    for (int i = StartIndex; i < Size; ++i) {
-        result.pVector[i] = pVector[i] - val;
+    for (int i = 0; i < Size - StartIndex; ++i) {
+        result.pVector[i + StartIndex] = pVector[i] - val;
     }
     return result;
 }
@@ -177,7 +174,7 @@ TVector<ValType> TVector<ValType>::operator-(const ValType& val) {
 template <class ValType>
 TVector<ValType> TVector<ValType>::operator*(const ValType& val) {
     TVector result(Size, StartIndex);
-    for (int i = StartIndex; i < Size; ++i) {
+    for (int i = 0; i < Size- StartIndex; ++i) {
         result.pVector[i] = pVector[i] * val;//Умножаем на ненулевые элементы
     }
     return result;
@@ -186,64 +183,77 @@ TVector<ValType> TVector<ValType>::operator*(const ValType& val) {
 template <class ValType>
 TVector<ValType> TVector<ValType>::operator+(const TVector& v) {
     if (Size != v.Size) {
-        throw std::invalid_argument("Operation is defined only for the vectors of the same dimension");
+        throw std::runtime_error("The vectors have different sizes");
     }
-    TVector result(Size, std::min(StartIndex, v.StartIndex));
-    if (StartIndex < v.StartIndex) {//Если StartIndex операндов отличаются складываем значение pVector[i] с нулем
-        for (int i = StartIndex; i < v.StartIndex; ++i) {
-            result.pVector[i] = pVector[i];
+    int Min = std::min(StartIndex, v.StartIndex);
+    TVector<ValType> result(Size, Min);
+
+    if (Min == StartIndex) {
+        for (size_t i = Min; i < v.StartIndex; ++i) {
+            result[i] = (*this)[i];
+        }
+        for (size_t i = v.StartIndex; i < Size; ++i) {
+            result[i] = (*this)[i] + v.pVector[i - v.StartIndex];
         }
     }
     else {
-        for (int i = v.StartIndex; i < StartIndex; ++i) {
-            result.pVector[i] = v.pVector[i];
+        for (size_t i = Min; i < StartIndex; ++i) {
+            result[i] = v.pVector[i - v.StartIndex];
+        }
+        for (size_t i = StartIndex; i < Size; ++i) {
+            result[i] = (*this)[i] + v.pVector[i - v.StartIndex];
         }
     }
-    int Max = std::max(StartIndex, v.StartIndex);
-    for (int i = Max; i < Size; ++i) {
-        result.pVector[i] = pVector[i] + v.pVector[i];
-    }
+
     return result;
 }
 
 template <class ValType>
 TVector<ValType> TVector<ValType>::operator-(const TVector& v) {
-    if (Size != v.Size) {
-        throw std::invalid_argument("Operation is defined only for the vectors of the same dimension");
+    if (this->Size != v.Size) {
+        throw std::runtime_error("The vectors have different sizes");
     }
-    TVector result(Size, std::min(StartIndex, v.StartIndex));
-    if (StartIndex < v.StartIndex) {
-        for (int i = StartIndex; i < v.StartIndex; ++i) {
-            result.pVector[i] = pVector[i];
+    int Min = std::min(StartIndex, v.StartIndex);
+    TVector<ValType> result(Size, Min);
+
+    if (Min == StartIndex) {
+        for (size_t i = Min; i < v.StartIndex; ++i) {
+            result[i] = (*this)[i];
+        }
+        for (size_t i = v.StartIndex; i < Size; ++i) {
+            result[i] = (*this)[i] - v.pVector[i - v.StartIndex];
         }
     }
     else {
-        for (int i = v.StartIndex; i < StartIndex; ++i) {
-            result.pVector[i] = -v.pVector[i];
+        for (size_t i = Min; i < StartIndex; ++i) {
+            result[i] = -v.pVector[i - v.StartIndex];
+        }
+        for (size_t i = StartIndex; i < Size; ++i) {
+            result[i] = (*this)[i] - v.pVector[i - v.StartIndex];
         }
     }
-    int Max = std::max(StartIndex, v.StartIndex);
-    for (int i = Max; i < Size; ++i) {
-        result.pVector[i] = pVector[i] - v.pVector[i];
-    }
+
     return result;
 }
 
 template <class ValType>
 ValType TVector<ValType>::operator*(const TVector& v) {
     if (Size != v.Size) {
-        throw std::invalid_argument("Operation is defined only for the vectors of the same dimension");
+        throw std::invalid_argument("Vectors must be of the same size");
     }
     ValType result = 0;
-    int Max = std::max(StartIndex, v.StartIndex);
-    for (int i = Max; i < Size; ++i) {//Начинаем с максимального StartIndex поскольку до него все слагаемые обратятся в ноль
-        result += pVector[i] * v.pVector[i];
+    int maxStartIndex = std::max(StartIndex, v.StartIndex);
+
+    for (int i = maxStartIndex; i < Size; ++i) {
+        ValType val1 = (i >= StartIndex) ? pVector[i - StartIndex] : ValType(0);
+        ValType val2 = (i >= v.StartIndex) ? v.pVector[i - v.StartIndex] : ValType(0);
+        result += val1 * val2;
     }
     return result;
 }
 
 //Реализация TMatrix
-
+//Убрал некоторые исключения, поскольку их бросают операции вектора
 template <class ValType>
 TMatrix<ValType>::TMatrix(int s) : TVector<TVector<ValType>>(s, 0) {
     if (s <= 0 || s > MAX_MATRIX_SIZE) {
@@ -258,28 +268,11 @@ template <class ValType>
 TMatrix<ValType>::TMatrix(const TMatrix& mt) : TVector<TVector<ValType>>(mt) {}
 
 template <class ValType>
-TMatrix<ValType>::TMatrix(const TVector<TVector<ValType>>& mt_vec) : TVector<TVector<ValType>>(mt_vec) {
-    if (this->Size != mt_vec.GetSize() || this->StartIndex != mt_vec.GetStartIndex()) {
-        throw std::invalid_argument("Internal error during TMatrix conversion construction based on base TVector copy.");
-    }
-    for (int i = 0; i < this->Size; ++i) {
-        if (this->pVector[i].GetStartIndex() != i || this->pVector[i].GetSize() != this->Size) {
-            throw std::invalid_argument("Input TVector<TVector<ValType>> does not represent a valid upper triangular matrix (invalid StartIndex or Size in row " + std::to_string(i) + ").");
-        }
-    }
-}
+TMatrix<ValType>::TMatrix(const TVector<TVector<ValType>>& mt) : TVector<TVector<ValType>>(mt) {}
 
 template <class ValType>
 bool TMatrix<ValType>::operator==(const TMatrix& mt) const {
-    if (this->Size != mt.Size) {
-        return false;
-    }
-    for (int i = 0; i < mt.Size; ++i) {//Сравниваем построчно
-        if (this->pVector[i] != mt.pVector[i]) {
-            return false;
-        }
-    }
-    return true;
+    return static_cast<const TVector<TVector<ValType>>&>(*this) == static_cast<const TVector<TVector<ValType>>&>(mt);
 }
 
 template <class ValType>
@@ -297,9 +290,6 @@ TMatrix<ValType>& TMatrix<ValType>::operator=(const TMatrix& mt) {
 
 template <class ValType>
 TMatrix<ValType> TMatrix<ValType>::operator+ (const TMatrix& mt) {
-    if (this->Size != mt.Size) {
-        throw std::invalid_argument("Matrix addition is only defined for matrices of the same dimension");
-    }
     TMatrix<ValType> result(this->Size);
     for (int i = 0; i < this->Size; i++) {
         result.pVector[i] = this->pVector[i] + mt.pVector[i];
@@ -309,9 +299,6 @@ TMatrix<ValType> TMatrix<ValType>::operator+ (const TMatrix& mt) {
 
 template <class ValType>
 TMatrix<ValType> TMatrix<ValType>::operator- (const TMatrix& mt) {
-    if (this->Size != mt.Size) {
-        throw std::invalid_argument("Matrix subtraction is only defined for matrices of the same dimension");
-    }
     TMatrix<ValType> result(this->Size);
     for (int i = 0; i < this->Size; i++) {
         result.pVector[i] = this->pVector[i] - mt.pVector[i];
