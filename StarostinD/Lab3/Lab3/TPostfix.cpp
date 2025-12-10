@@ -57,7 +57,7 @@ void TPostfix::Parse() {
 			while (i < infix.size() && isalpha(infix[i])) {
 				curr += infix[i++];
 			}
-			if (curr != "cos") {
+			if(!(curr == "cos" && i < infix.size() && infix[i] == '(')) {
 				bool was = false;
 				for (const auto& op : operands) {
 					if (curr == op.first) {

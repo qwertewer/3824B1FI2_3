@@ -7,7 +7,7 @@ using namespace std;
 int main() {
 	try {
 		//TPostfix tst("((cos(x) + 5.2 * 2)* (a - -b) / 5 + 1)");
-		TPostfix tst("cos(cos(cos(1)))");
+		TPostfix tst("cos + cos(cos(cos(1)))");
 		vector<string> ops(tst.GetOperands());
 		vector<double> vals;
 		cout << tst.GetInfix() << '\n';
