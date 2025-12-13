@@ -41,6 +41,12 @@ TEST(TestNameOperandsOnly, TestNameOperands) {
 	double result3 = calculator3.evaluate(expression3);
 	EXPECT_EQ(result3, 1);
 
+	EXPECT_ANY_THROW({
+		TPostfix calculator1;
+		std::string expression1 = "";
+		double result1 = calculator1.evaluate(expression1);
+		EXPECT_EQ(result1, 5);
+		});
 }
 
 TEST(TestNameVariablesOnly, TestNameOperands) {
@@ -61,7 +67,6 @@ TEST(TestNameVariablesOnly, TestNameOperands) {
 	calculator3.setVariable("a", 4);
 	double result3 = calculator3.evaluate(expression3);
 	EXPECT_EQ(result3, -4);
-
 }
 TEST(TestNameTPostfixNoExeptIntegersSimple, TestNameTPostfixIntegersSimple) {
 	TPostfix calculator1;
@@ -204,6 +209,54 @@ TEST(TestNameTPostfixExceptions, TestNameTPostfixExcept) {
 		std::string expression1 = "5*3.2+5(";
 		double result1 = calculator1.evaluate(expression1);
 		});
+
+	EXPECT_ANY_THROW({
+		TPostfix calculator1;
+		std::string expression1 = "/12*-3";
+		double result1 = calculator1.evaluate(expression1);
+		});
+
+	EXPECT_ANY_THROW({
+		TPostfix calculator1;
+		std::string expression1 = "3.5++1";
+		double result1 = calculator1.evaluate(expression1);
+		});
+
+	EXPECT_ANY_THROW({
+		TPostfix calculator1;
+		std::string expression1 = "~51";
+		double result1 = calculator1.evaluate(expression1);
+		});
+
+	EXPECT_ANY_THROW({
+		TPostfix calculator1;
+		std::string expression1 = "1+@";
+		double result1 = calculator1.evaluate(expression1);
+		});
+
+	EXPECT_ANY_THROW({
+		TPostfix calculator1;
+		std::string expression1 = "1+@12bc5^(*";
+		double result1 = calculator1.evaluate(expression1);
+		});
+
+	EXPECT_ANY_THROW({
+		TPostfix calculator1;
+		std::string expression1 = "5/0";
+		double result1 = calculator1.evaluate(expression1);
+		});
+
+	EXPECT_ANY_THROW({
+		TPostfix calculator1;
+		std::string expression1 = "0/0";
+		double result1 = calculator1.evaluate(expression1);
+		});
+
+	EXPECT_ANY_THROW({
+		TPostfix calculator1;
+		std::string expression1 = "(5+4-2)/0+1";
+		double result1 = calculator1.evaluate(expression1);
+		});
 }
 
 TEST(TestNameVariablesNoExcept, TestNameVariablesCheck) {
@@ -258,6 +311,12 @@ TEST(TestCaseNameVariablesExceptions, TestNameVarExcept) {
 		});
 
 	EXPECT_ANY_THROW({
+		std::string expression = "a2+1";
+		calculator.setVariable("a", 2);
+		double result = calculator.evaluate(expression);
+		});
+
+	EXPECT_ANY_THROW({
 		std::string expression = "a+3*b)";
 		calculator.setVariable("a", 2);
 		calculator.setVariable("b", 4);
@@ -268,6 +327,22 @@ TEST(TestCaseNameVariablesExceptions, TestNameVarExcept) {
 		std::string expression = "a*+3*b";
 		calculator.setVariable("a", 2);
 		calculator.setVariable("b", 4);
+		double result = calculator.evaluate(expression);
+		});
+
+	EXPECT_ANY_THROW({
+	TPostfix calculator;
+	std::string expression = "(2*a+3)/b";
+	calculator.setVariable("a", 2);
+	calculator.setVariable("b", 0);
+	double result = calculator.evaluate(expression);
+		});
+
+	EXPECT_ANY_THROW({
+		TPostfix calculator;
+		std::string expression = "(2*a+3)/(b-2)";
+		calculator.setVariable("a", 2);
+		calculator.setVariable("b", 2);
 		double result = calculator.evaluate(expression);
 		});
 }
@@ -282,7 +357,7 @@ TEST(TestCaseNameSinus, TestNameSin) {
 		});
 	EXPECT_NO_THROW({
 		TPostfix calculator;
-		std::string expression = "sin(1)*13";
+		std::string expression = "sin(sin(sin(1)))*13";
 		double result = calculator.evaluate(expression);
 		});
 	EXPECT_NO_THROW({
@@ -324,6 +399,22 @@ TEST(TestCaseNameUnaryMinusCheck, TestNameUnaryMinus) {
 	calculator3.setVariable("b", 3);
 	double result3 = calculator3.evaluate(expression3);
 	EXPECT_EQ(result3, 6);
+
+	EXPECT_NO_THROW({
+		TPostfix calculator1;
+		std::string expression1 = "-(-4)";
+		double result1 = calculator1.evaluate(expression1);
+		});
+	EXPECT_NO_THROW({
+		TPostfix calculator1;
+		std::string expression1 = "5--4";
+		double result1 = calculator1.evaluate(expression1);
+		});
+	EXPECT_ANY_THROW({
+		TPostfix calculator1;
+		std::string expression1 = "--4"; // Полагаем --4 ошибкой если "-" унарный оператор
+		double result1 = calculator1.evaluate(expression1);
+		});
 }
 
 TEST(TestCaseNameSameVariables, TestNameSameVariables) {
@@ -341,4 +432,21 @@ TEST(TestCaseNameSameVariables, TestNameSameVariables) {
 	std::string expression3 = "(9+-6)*-3";
 	double result3 = calculator3.evaluate(expression3);
 	EXPECT_EQ(result3, -9);
+}
+
+TEST(TestCaseNamePriorityCheck, TestNamePriority) {
+	TPostfix calculator1;
+	std::string expression1 = "5-4*2";
+	double result1 = calculator1.evaluate(expression1);
+	EXPECT_EQ(result1, -3);
+
+	TPostfix calculator2;
+	std::string expression2 = "5*3+-3*2";
+	double result2 = calculator2.evaluate(expression2);
+	EXPECT_EQ(result2, 9);
+
+	TPostfix calculator3;
+	std::string expression3 = "2.5/0.5+0.5";
+	double result3 = calculator3.evaluate(expression3);
+	EXPECT_EQ(result3, 5.5);
 }
